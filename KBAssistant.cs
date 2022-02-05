@@ -9,19 +9,28 @@ using System.Linq;
 using System.Reflection.Emit;
 using UnityEngine;
 using BepInEx.Configuration;
+using System.ComponentModel;
 
 namespace KBAssistant
 {
-    [BepInPlugin("KBAssistant", "KB挂机助手", "1.0.0.0")]
+    [BepInPlugin("KBAssistant", "KB挂机助手", "1.1.0.0")]
     public class KBAssistant : BaseUnityPlugin
     {
         public static float timeScale = 1;
         public static ConfigEntry<float> userTimeScale;
+        public static ConfigEntry<EntityPremiumType> entityPremiumTypeValueList;
+        public static EntityPremiumType userEntityPremiumType = EntityPremiumType.钻石卡;
+        public enum EntityPremiumType
+        {
+            金卡,
+            钻石卡
+        }
 
         void Start()
         {
             Harmony.CreateAndPatchAll(typeof(KBAssistant), null);
-            userTimeScale = Config.AddSetting("动画速度", "值:", timeScale, new ConfigDescription("范围0.01-4", new AcceptableValueRange<float>((float)0.01, 4)));
+            userTimeScale = Config.Bind("动画速度", "值:", timeScale, new ConfigDescription("范围0.01-4", new AcceptableValueRange<float>((float)0.01, 4)));
+            entityPremiumTypeValueList = Config.Bind("己方实体卡牌", "类型:", userEntityPremiumType, new ConfigDescription("己方实体卡牌类型", null, new EntityPremiumType()));
         }
 
         void Update()
@@ -31,6 +40,11 @@ namespace KBAssistant
                 TimeScaleMgr.Get().SetGameTimeScale(userTimeScale.Value);
                 Debug.Log("当前动画速度：" + userTimeScale.Value);
                 timeScale = userTimeScale.Value;
+            }
+            if (userEntityPremiumType != entityPremiumTypeValueList.Value)
+            {
+                Debug.Log("己方实体卡牌类型：" + entityPremiumTypeValueList.Value);
+                userEntityPremiumType = entityPremiumTypeValueList.Value;
             }
         }
 
@@ -61,7 +75,7 @@ namespace KBAssistant
         }
 
         /// <summary>
-        /// 己方实体全金卡
+        /// 己方实体卡牌类型
         /// </summary>
         /// <param name="__result"></param>
         /// <param name="__instance"></param>
@@ -71,16 +85,25 @@ namespace KBAssistant
         public static bool GetPremiumTypeMod(ref TAG_PREMIUM __result, Entity __instance)
         {
             __result = TAG_PREMIUM.NORMAL;
-            if (__instance.GetControllerSide() == Player.Side.FRIENDLY && !GameMgr.Get().IsBattlegrounds())
+            if (!GameMgr.Get().IsBattlegrounds())
             {
-                __result = TAG_PREMIUM.GOLDEN;
-            }
-            else
-            {
-                __result = (TAG_PREMIUM)__instance.GetTag(GAME_TAG.PREMIUM);
-                if (GameMgr.Get().IsBattlegrounds() && __result == TAG_PREMIUM.DIAMOND && !__instance.HasTag(GAME_TAG.HAS_DIAMOND_QUALITY))
+                if (__instance.GetControllerSide() == Player.Side.FRIENDLY)
                 {
-                    __result = TAG_PREMIUM.GOLDEN;
+                    if (userEntityPremiumType == EntityPremiumType.金卡)
+                    {
+                        __result = TAG_PREMIUM.GOLDEN;
+                    }
+                    else if (userEntityPremiumType == EntityPremiumType.钻石卡)
+                    {
+                        if (__instance.HasTag(GAME_TAG.HAS_DIAMOND_QUALITY))
+                        {
+                            __result = TAG_PREMIUM.DIAMOND;
+                        }
+                        else
+                        {
+                            __result = TAG_PREMIUM.GOLDEN;
+                        }
+                    }
                 }
             }
             return false;
@@ -92,7 +115,7 @@ namespace KBAssistant
         [HarmonyPostfix]
         [HarmonyPatch(typeof(QuestManager), "ShowQuestNotification")]
         public static void ShowQuestNotification_Postfix()
-        {           
+        {
             //Debug.Log("ShowQuestNotification被调用了！");
             HandleQuests();
         }
