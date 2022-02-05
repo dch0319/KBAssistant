@@ -8,24 +8,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using UnityEngine;
+using BepInEx.Configuration;
 
 namespace KBAssistant
 {
     [BepInPlugin("KBAssistant", "KB挂机助手", "1.0.0.0")]
     public class KBAssistant : BaseUnityPlugin
     {
+        public static float timeScale = 1;
+        public static ConfigEntry<float> userTimeScale;
+
         void Start()
         {
             Harmony.CreateAndPatchAll(typeof(KBAssistant), null);
+            userTimeScale = Config.AddSetting("动画速度", "值:", timeScale, new ConfigDescription("范围0.01-4", new AcceptableValueRange<float>((float)0.01, 4)));
         }
 
         void Update()
         {
-            var key = new BepInEx.Configuration.KeyboardShortcut(KeyCode.F9);
-
-            if (key.IsDown())
+            if (timeScale != userTimeScale.Value)
             {
-                HandleQuests();
+                TimeScaleMgr.Get().SetGameTimeScale(userTimeScale.Value);
+                Debug.Log("当前动画速度：" + userTimeScale.Value);
+                timeScale = userTimeScale.Value;
             }
         }
 
