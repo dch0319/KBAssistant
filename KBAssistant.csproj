@@ -32,24 +32,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>D:\Program Files (x86)\Hearthstone\BepInEx\core\0Harmony.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>References\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>D:\Program Files (x86)\Hearthstone\Hearthstone_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>References\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>D:\Program Files (x86)\Hearthstone\Hearthstone_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>References\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>D:\Program Files (x86)\Hearthstone\BepInEx\core\BepInEx.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>References\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="blizzard.bgsclient">
-      <HintPath>D:\Program Files (x86)\Hearthstone\Hearthstone_Data\Managed\blizzard.bgsclient.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>References\blizzard.bgsclient.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -60,12 +55,10 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>D:\Program Files (x86)\Hearthstone\Hearthstone_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>References\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>D:\Program Files (x86)\Hearthstone\Hearthstone_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>References\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
