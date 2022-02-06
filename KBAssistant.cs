@@ -130,7 +130,7 @@ namespace KBAssistant
                 {
                     return;
                 }
-                Map<int, PlayerQuestState> privateField = (Map<int, PlayerQuestState>)Traverse.Create(Hearthstone.Progression.QuestManager.Get()).Field("m_questState").GetValue();
+                Map<int, PlayerQuestState> privateField = Traverse.Create(QuestManager.Get()).Field("m_questState").GetValue<Map<int, PlayerQuestState>>();
                 for (int i = 0; i < privateField.Count; i++)
                 {
                     PlayerQuestState playerQuestState = privateField.Values.ToList()[i];
@@ -138,17 +138,26 @@ namespace KBAssistant
                     {
                         QuestDbfRecord record = GameDbf.Quest.GetRecord(playerQuestState.QuestId);
                         QuestPool.QuestPoolType questPoolType = GetQuestPoolType(record);
-                        string text2 = (string)record.Name + "~" + playerQuestState.Progress + "~0~0~" + record.ID + "~" + (string)record.Description + "~" + record.RewardTrackXp + "~" + questPoolType;
+                        int rerollCount = Traverse.Create(QuestManager.Get()).Method("GetQuestPoolRerollCount", record.QuestPool).GetValue<int>();
+                        string text2 = record.Name + "~" + playerQuestState.Progress + "~" + record.ID + "~" + record.Description + "~" + record.RewardTrackXp + "~" + questPoolType + "~" + rerollCount + "~" + playerQuestState.Status;
                         Quest quest = new Quest()
                         {
                             ID = record.ID,
-                            Description = (string)record.Description,
+                            Description = record.Description,
                             RewardXP = record.RewardTrackXp,
-                            Type = questPoolType.ToString()
+                            Type = questPoolType.ToString(),
+                            RerollCount = rerollCount
                         };
                         QuestList.Add(quest);
                         text += text2;
                         Debug.Log(text2);
+                    }
+                }
+                for (int i = QuestList.Count - 1; i >= 0; i--)
+                {
+                    if (QuestList[i].RerollCount <= 0)
+                    {
+                        QuestList.Remove(QuestList[i]);
                     }
                 }
                 if (QuestList.Count != 0)
@@ -161,6 +170,7 @@ namespace KBAssistant
                 Debug.LogError(e);
             }
         }
+
         public static QuestPool.QuestPoolType GetQuestPoolType(QuestDbfRecord questAsset)
         {
             if (questAsset != null && questAsset.QuestPoolRecord != null)
