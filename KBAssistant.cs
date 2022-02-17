@@ -10,6 +10,7 @@ using System.Reflection.Emit;
 using UnityEngine;
 using BepInEx.Configuration;
 using System.ComponentModel;
+using Hearthstone.DataModels;
 
 namespace KBAssistant
 {
@@ -130,34 +131,68 @@ namespace KBAssistant
                 {
                     return;
                 }
-                Map<int, PlayerQuestState> privateField = Traverse.Create(QuestManager.Get()).Field("m_questState").GetValue<Map<int, PlayerQuestState>>();
-                for (int i = 0; i < privateField.Count; i++)
+
+                Traverse QuestManagerTraverse = Traverse.Create(QuestManager.Get());
+                List<PlayerQuestState> dailyQuests = QuestManagerTraverse.Method("GetActiveQuestStatesForPool", new Type[] { typeof(QuestPool.QuestPoolType) }).GetValue<List<PlayerQuestState>>(QuestPool.QuestPoolType.DAILY);
+                List<PlayerQuestState> weeklyQuests = QuestManagerTraverse.Method("GetActiveQuestStatesForPool", new Type[] { typeof(QuestPool.QuestPoolType) }).GetValue<List<PlayerQuestState>>(QuestPool.QuestPoolType.WEEKLY);
+                List<PlayerQuestState> noneQuests = QuestManagerTraverse.Method("GetActiveQuestStatesForPool", new Type[] { typeof(QuestPool.QuestPoolType) }).GetValue<List<PlayerQuestState>>(QuestPool.QuestPoolType.NONE);
+
+                int i = 0;
+                Debug.Log("每日任务");
+                foreach (PlayerQuestState quest in dailyQuests)
                 {
-                    PlayerQuestState playerQuestState = privateField.Values.ToList()[i];
-                    if (playerQuestState.Status == 1 || playerQuestState.Status == 2)
+                    QuestDataModel model = Traverse.Create(QuestManager.Get()).Method("CreateQuestDataModel", new Type[] { typeof(PlayerQuestState) }).GetValue<QuestDataModel>(quest);
+                    Debug.LogFormat("任务{0}:ID:{1};描述:{2};经验奖励:{3};可更换次数:{4};", ++i, model.QuestId, model.Description, model.RewardTrackXp, model.RerollCount);
+                    Quest quest2 = new Quest()
                     {
-                        QuestDbfRecord record = GameDbf.Quest.GetRecord(playerQuestState.QuestId);
-                        QuestPool.QuestPoolType questPoolType = GetQuestPoolType(record);
-                        int rerollCount = Traverse.Create(QuestManager.Get()).Method("GetQuestPoolRerollCount", record.QuestPool).GetValue<int>();
-                        string text2 = record.Name + "~" + playerQuestState.Progress + "~" + record.ID + "~" + record.Description + "~" + record.RewardTrackXp + "~" + questPoolType + "~" + rerollCount + "~" + playerQuestState.Status;
-                        Quest quest = new Quest()
-                        {
-                            ID = record.ID,
-                            Description = record.Description,
-                            RewardXP = record.RewardTrackXp,
-                            Type = questPoolType.ToString(),
-                            RerollCount = rerollCount
-                        };
-                        QuestList.Add(quest);
-                        text += text2;
-                        Debug.Log(text2);
-                    }
+                        ID = model.QuestId,
+                        Description = model.Description,
+                        RewardXP = model.RewardTrackXp,
+                        Type = "DAILY",
+                        RerollCount = model.RerollCount
+                    };
+                    QuestList.Add(quest2);
                 }
-                for (int i = QuestList.Count - 1; i >= 0; i--)
+
+                i = 0;
+                Debug.Log("每周任务");
+                foreach (PlayerQuestState quest in weeklyQuests)
                 {
-                    if (QuestList[i].RerollCount <= 0)
+                    QuestDataModel model = Traverse.Create(QuestManager.Get()).Method("CreateQuestDataModel", new Type[] { typeof(PlayerQuestState) }).GetValue<QuestDataModel>(quest);
+                    Debug.LogFormat("任务{0}:ID:{1};描述:{2};经验奖励:{3};可更换次数:{4};", ++i, model.QuestId, model.Description, model.RewardTrackXp, model.RerollCount);
+                    Quest quest2 = new Quest()
                     {
-                        QuestList.Remove(QuestList[i]);
+                        ID = model.QuestId,
+                        Description = model.Description,
+                        RewardXP = model.RewardTrackXp,
+                        Type = "WEEKLY",
+                        RerollCount = model.RerollCount
+                    };
+                    QuestList.Add(quest2);
+                }
+
+                i = 0;
+                Debug.Log("其他任务");
+                foreach (PlayerQuestState quest in noneQuests)
+                {
+                    QuestDataModel model = Traverse.Create(QuestManager.Get()).Method("CreateQuestDataModel", new Type[] { typeof(PlayerQuestState) }).GetValue<QuestDataModel>(quest);
+                    Debug.LogFormat("任务{0}:ID:{1};描述:{2};经验奖励:{3};可更换次数:{4};", ++i, model.QuestId, model.Description, model.RewardTrackXp, model.RerollCount);
+                    Quest quest2 = new Quest()
+                    {
+                        ID = model.QuestId,
+                        Description = model.Description,
+                        RewardXP = model.RewardTrackXp,
+                        Type = "NONE",
+                        RerollCount = model.RerollCount
+                    };
+                    QuestList.Add(quest2);
+                }
+
+                for (int j = QuestList.Count - 1; j >= 0; j--)
+                {
+                    if (QuestList[j].RerollCount <= 0)
+                    {
+                        QuestList.Remove(QuestList[j]);
                     }
                 }
                 if (QuestList.Count != 0)
